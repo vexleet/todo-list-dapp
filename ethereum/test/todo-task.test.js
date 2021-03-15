@@ -1,4 +1,5 @@
 const { assert } = require('chai');
+const utils = require('./helpers/utils');
 
 const TodoList = artifacts.require('TodoList');
 const tasksNames = [
@@ -17,7 +18,7 @@ contract('TodoList', (accounts) => {
     contractInstance = await TodoList.new();
   });
 
-  describe('Adding tasks', () => {
+  describe('Adding Tasks', () => {
     it("should be able to add a task and its name to equal 'Task#1'", async () => {
       const result = await contractInstance.addTask(tasksNames[0], {
         from: alice,
@@ -57,13 +58,13 @@ contract('TodoList', (accounts) => {
 
       assert.equal(aliceTask.logs[0].args.name, tasksNames[0]);
       assert.equal(bobTask.logs[0].args.name, tasksNames[0]);
-      assert.equal(aliceTaskOwnerAddress, alice);
-      assert.equal(bobTaskOwnerAddress, bob);
-      assert.notEqual(aliceTaskOwnerAddress, bobTaskOwnerAddress);
+      assert.equal(aliceTaskOwnerAddress.owner, alice);
+      assert.equal(bobTaskOwnerAddress.owner, bob);
+      assert.notEqual(aliceTaskOwnerAddress.owner, bobTaskOwnerAddress.owner);
     });
   });
 
-  describe('Getting tasks', () => {
+  describe('Getting Tasks', () => {
     it('should return correct count of tasks', async () => {
       for (let i = 1; i <= 3; i++) {
         await contractInstance.addTask(tasksNames[0], {
@@ -111,6 +112,30 @@ contract('TodoList', (accounts) => {
       for (let i = 0; i < bobTasks; i++) {
         assert.equal(bobTasks.name, tasksNames[i + 3]);
       }
+    });
+  });
+
+  describe('Completing Tasks', () => {
+    it('should complete task', async () => {
+      const aliceTask = await contractInstance.addTask(tasksNames[0], {
+        from: alice,
+      });
+      await contractInstance.completeTask(aliceTask.logs[0].args.todo_id, {
+        from: alice,
+      });
+      const aliceTasks = await contractInstance.getTasks({ from: alice });
+      assert.equal(aliceTasks[0].is_done, true);
+    });
+
+    it('user should not complete other user task', async () => {
+      const aliceTask = await contractInstance.addTask(tasksNames[0], {
+        from: alice,
+      });
+      await utils.shouldThrow(
+        contractInstance.completeTask(aliceTask.logs[0].args.todo_id, {
+          from: bob,
+        })
+      );
     });
   });
 });

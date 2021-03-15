@@ -11,20 +11,25 @@ contract TodoList {
         bool is_done;
     }
 
+    struct TaskInfo {
+        address owner;
+        uint256 indexOfTodoTask;
+    }
+
     TodoTask[] tasks;
 
-    mapping(uint256 => address) public ownerOfTask;
+    mapping(uint256 => TaskInfo) public ownerOfTask;
     mapping(address => uint256) public tasksCount;
 
     modifier onlyOwnerOf(uint256 _todoId) {
-        require(msg.sender == ownerOfTask[_todoId]);
+        require(msg.sender == ownerOfTask[_todoId].owner);
         _;
     }
 
     function addTask(string memory _name) external {
         TodoTask memory newTask = TodoTask(randMod(100), _name, false);
         tasks.push(newTask);
-        ownerOfTask[newTask.todo_id] = msg.sender;
+        ownerOfTask[newTask.todo_id] = TaskInfo(msg.sender, tasks.length - 1);
         tasksCount[msg.sender] = tasks.length;
         emit NewTask(newTask.todo_id, newTask.name, newTask.is_done);
     }
@@ -33,7 +38,7 @@ contract TodoList {
         TodoTask[] memory result = new TodoTask[](tasksCount[msg.sender]);
         uint256 counter = 0;
         for (uint256 i = 0; i < tasks.length; i++) {
-            if (ownerOfTask[tasks[i].todo_id] == msg.sender) {
+            if (ownerOfTask[tasks[i].todo_id].owner == msg.sender) {
                 result[counter] = tasks[i];
                 counter++;
             }
@@ -42,6 +47,11 @@ contract TodoList {
             }
         }
         return result;
+    }
+
+    function completeTask(uint256 taskId) external onlyOwnerOf(taskId) {
+        TaskInfo memory taskInfo = ownerOfTask[taskId];
+        tasks[taskInfo.indexOfTodoTask].is_done = true;
     }
 
     function randMod(uint256 _modulus) internal returns (uint256) {
