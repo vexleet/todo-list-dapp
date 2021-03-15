@@ -138,4 +138,28 @@ contract('TodoList', (accounts) => {
       );
     });
   });
+
+  describe('Deleting Tasks', () => {
+    it('should delete task', async () => {
+      const aliceTask = await contractInstance.addTask(tasksNames[0], {
+        from: alice,
+      });
+      await contractInstance.removeTask(aliceTask.logs[0].args.todo_id, {
+        from: alice,
+      });
+      const aliceTasks = await contractInstance.getTasks({ from: alice });
+      assert.equal(aliceTasks.length, 0);
+    });
+
+    it('user should not delete other user task', async () => {
+      const aliceTask = await contractInstance.addTask(tasksNames[0], {
+        from: alice,
+      });
+      await utils.shouldThrow(
+        contractInstance.removeTask(aliceTask.logs[0].args.todo_id, {
+          from: bob,
+        })
+      );
+    });
+  });
 });

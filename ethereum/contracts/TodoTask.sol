@@ -34,6 +34,13 @@ contract TodoList {
         emit NewTask(newTask.todo_id, newTask.name, newTask.is_done);
     }
 
+    function removeTask(uint256 taskId) external onlyOwnerOf(taskId) {
+        TaskInfo memory taskInfo = ownerOfTask[taskId];
+        delete tasks[taskInfo.indexOfTodoTask];
+        delete ownerOfTask[taskId];
+        tasksCount[msg.sender]--;
+    }
+
     function getTasks() external view returns (TodoTask[] memory) {
         TodoTask[] memory result = new TodoTask[](tasksCount[msg.sender]);
         uint256 counter = 0;
