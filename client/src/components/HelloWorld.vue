@@ -11,7 +11,7 @@ export default {
   setup() {
     const count = ref(0);
     const double = computed(() => count.value * 2);
-    console.log(count);
+
     function increment() {
       count.value++;
     }
